@@ -1,4 +1,4 @@
-name: Build Test and push
+name: Build, Test, and Push
 on: [push]
 env:
   IMAGE_NAME: student_service
@@ -9,14 +9,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build docker
-        run: |
-          docker build . -t $REPO_NAME/$IMAGE_NAME
-      - name: run docker
-        run: |
-          docker run -d -p 8080:8080 $REPO_NAME/$IMAGE_NAME:latest && \
-            docker ps && sleep 5
 
+      # Build and run services using docker compose
+      - name: Build and start services with docker compose
+        run: docker compose up --build -d
+
+      # Wait for services to be fully ready (adjust the sleep time if necessary)
+      - name: Wait for services to be ready
+        run: sleep 10
+
+      # Tag built image for push
+      - name: Tag built image for push
+        run: docker tag $IMAGE_NAME $REPO_NAME/$IMAGE_NAME:latest
+
+      # Your other steps, such as checking files and running API tests
       - name: "Check files existence"
         uses: andstor/file-existence-action@v2
         with:
@@ -38,15 +44,17 @@ jobs:
         env:
           JSON_DOC: ${{ steps.run-newman.outputs.summary }}
         run: |
+          # Write API test summary to summary.json for debugging
           printf '%s\n' "$JSON_DOC" > summary.json
           cat summary.json
           if grep -q Collection summary.json; then
-            echo "failed=false" >> $GITHUB_OUTPUT;
+            # Instead of the deprecated set-output command, write directly to $GITHUB_OUTPUT
+            echo "failed=false" >> $GITHUB_OUTPUT
           else
-            echo "failed=true" >> $GITHUB_OUTPUT;
+            echo "failed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: fail if empty
+      - name: Fail if tests failed
         if: ${{ steps.fail-check.outputs.failed == 'true' }}
         run: exit 1
 
@@ -56,6 +64,9 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Push image to docker hub Container Registry
-        run: |
-          docker push $REPO_NAME/$IMAGE_NAME
+      - name: Push image to Docker Hub Container Registry
+        run: docker push $REPO_NAME/$IMAGE_NAME
+
+      # Optionally, bring down the docker compose services
+      - name: Tear down docker compose services
+        run: docker compose down

@@ -1,8 +1,8 @@
-version: '3'
+version: "3"
 services:
   student_service:
     build: .
-    image: my_student_service
+    image: student_service
     restart: unless-stopped
     depends_on:
       - mongo
