@@ -1,16 +1,12 @@
 FROM mirror.gcr.io/library/python:3.12-alpine
 
-RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-COPY requirements.txt /usr/src/app/
-
+COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-COPY . /usr/src/app
+COPY . .
 
 EXPOSE 8080
 
-ENTRYPOINT ["python3"]
-
-CMD ["-m", "swagger_server"]
+CMD ["python3", "-m", "swagger_server"]
