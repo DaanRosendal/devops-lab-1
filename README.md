@@ -38,12 +38,12 @@ tox
 
 ## Running with Docker
 
-To run the server on a Docker container, please execute the following from the root directory:
+To run the server with Docker compose, please execute the following from the root directory:
 
 ```bash
-# building the image
-docker build -t swagger_server .
+# Start up Flask backend and MongoDB 
+docker compose up
 
-# starting up a container
-docker run -p 8080:8080 swagger_server
+# To power it off
+docker compose down
 ```
